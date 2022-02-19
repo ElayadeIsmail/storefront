@@ -12,8 +12,14 @@ https://docs.djangoproject.com/en/4.0/ref/settings/
 
 from pathlib import Path
 
+from environs import Env
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Initializing environs
+env = Env()
+env.read_env()  # read .env file, if it exists
 
 
 # Quick-start development settings - unsuitable for production
@@ -23,7 +29,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-*-tzv7mx$4pw%d1zr!@k-awe+6gr)e9r)u$82_&i+dxbxuhugb'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = env.bool("DEBUG")
 
 ALLOWED_HOSTS = []
 
@@ -38,7 +44,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'store',
-    'tags'
+    'tags',
+    "likes"
 ]
 
 MIDDLEWARE = [
@@ -77,8 +84,12 @@ WSGI_APPLICATION = 'storefront.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': env('DB_NAME'),
+        'HOST': env("DB_HOST"),
+        'PORT': env.int('DB_PORT'),
+        'USER': env('DB_USER'),
+        'PASSWORD': env('DB_PASSWORD')
     }
 }
 
