@@ -1,4 +1,6 @@
-from django.contrib import admin
+from dataclasses import field
+
+from django.contrib import admin, messages
 from django.db.models import Count, QuerySet
 from django.http import HttpRequest
 from django.urls import reverse
@@ -23,6 +25,11 @@ class InventoryFilter(admin.SimpleListFilter):
 
 @admin.register(models.Product)
 class ProductAdmin(admin.ModelAdmin):
+    autocomplete_fields = ['collection']
+    prepopulated_fields = {
+        'slug': ['title']
+    }
+    actions = ['clear_inventory']
     list_display = ['title', 'unit_price',
                     'inventory_status', 'collection_title']
     list_editable = ['unit_price']
@@ -39,10 +46,19 @@ class ProductAdmin(admin.ModelAdmin):
             return 'Low'
         return 'OK'
 
+    @admin.action(description='Clear Inventory')
+    def clear_inventory(self, request, queryset: QuerySet):
+        updated_count = queryset.update(inventory=0)
+        self.message_user(
+            request, f'{updated_count}  products were successfully updated',
+            messages.SUCCESS
+        )
+
 
 @admin.register(models.Order)
 class OrderAdmin(admin.ModelAdmin):
     list_display = ['id', 'placed_at', 'customer']
+    autocomplete_fields = ['customer']
 
 
 @admin.register(models.Customer)
@@ -72,6 +88,7 @@ class CustomerAdmin(admin.ModelAdmin):
 @admin.register(models.Collection)
 class CollectionAdmin(admin.ModelAdmin):
     list_display = ['title', 'products_count']
+    search_fields = ['title']
 
     @admin.display(ordering='products_count')
     def products_count(self, collection):
