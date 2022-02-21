@@ -137,6 +137,6 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-REST_FRAMEWORk = {
+REST_FRAMEWORK = {
     'COERCE_DECIMAL_TO_STRING': False
 }
