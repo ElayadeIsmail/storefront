@@ -14,13 +14,32 @@ class CollectionSerializers(serializers.ModelSerializer):
 class ProductSerializers(serializers.ModelSerializer):
     class Meta:
         model = Product
-        fields = ['id', 'title', 'unit_price', 'price_with_tax', 'collection']
+        fields = ['id', 'title', 'unit_price', 'slug',
+                  'inventory', 'description', 'price_with_tax', 'collection']
 
     price_with_tax = serializers.SerializerMethodField(
         method_name='calculate_tax')
 
     def calculate_tax(self, product: Product):
         return product.unit_price * Decimal(1.1)
+
+    # Overwrite the create method
+    # def create(self, validated_data):
+    #     product = Product(**validated_data)
+    #     product.other = 1
+    #     product.otherField = 5
+    #     product.save()
+    #     return product
+
+    # def update(self, instance, validated_data):
+    #     instance.unit_price = validated_data.get('unit_price')
+    #     instance.save()
+    #     return instance
+
+    # def validate(self, data):
+    #     if data["password"] != data["confirmed_password"]:
+    #         return serializers.ValidationError('Password does not match')
+    #     return data
 
 
 # class ProductSerializers(serializers.Serializer):

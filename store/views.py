@@ -1,29 +1,38 @@
-from tkinter.tix import Tree
-from typing import Collection
 
 from django.shortcuts import get_object_or_404
-from rest_framework import status
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 
-from .models import Product
+from .models import Collection, Product
 from .serializers import CollectionSerializers, ProductSerializers
 
 
 # Create your views here.
-@api_view()
+@api_view(['GET', 'POST'])
 def product_list(request):
-    queryset = Product.objects.select_related('collection').all()
-    serializer = ProductSerializers(
-        queryset, many=Tree, context={'request': request})
-    return Response(serializer.data)
+    if request.method == 'GET':
+        queryset = Product.objects.select_related('collection').all()
+        serializer = ProductSerializers(
+            queryset, many=True, context={'request': request})
+        return Response(serializer.data)
+    elif request.method == 'POST':
+        serializer = ProductSerializers(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=201)
 
 
-@api_view()
+@api_view(['GET', 'PUT'])
 def product_details(request, id):
     product = get_object_or_404(Product, pk=id)
-    serializer = ProductSerializers(product, context={'request': request})
-    return Response(serializer.data)
+    if request.method == 'GET':
+        serializer = ProductSerializers(product, context={'request': request})
+        return Response(serializer.data)
+    elif request.method == 'PUT':
+        serializer = ProductSerializers(product, data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
 
     # try:
     #     product = Product.objects.get(pk=id)
