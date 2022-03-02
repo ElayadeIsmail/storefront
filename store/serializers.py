@@ -41,6 +41,10 @@ class CartItemProductSerializer(serializers.ModelSerializer):
         model = Product
         fields = ['id', 'title', 'unit_price']
 
+    def create(self, validated_data):
+        cart_id = self.context['cart_id']
+        return super().create(cart_id=cart_id, **validated_data)
+
 
 class CartItemSerializer(serializers.ModelSerializer):
     product = CartItemProductSerializer
@@ -56,7 +60,7 @@ class CartItemSerializer(serializers.ModelSerializer):
 
 class CartSerializer(serializers.ModelSerializer):
     id = serializers.UUIDField(read_only=True)
-    items = CartItemSerializer(many=True)
+    items = CartItemSerializer(many=True, read_only=True)
     total_price = serializers.SerializerMethodField()
 
     def get_total_price(self, cart: Cart):
