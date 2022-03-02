@@ -2,7 +2,6 @@ from rest_framework_nested import routers
 
 from . import views
 
-routers
 
 router = routers.DefaultRouter()
 router.register('products', views.ProductViewSet, basename="products")
