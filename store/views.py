@@ -7,12 +7,13 @@ from rest_framework.decorators import action
 from rest_framework.filters import OrderingFilter, SearchFilter
 from rest_framework.mixins import (CreateModelMixin, DestroyModelMixin,
                                    RetrieveModelMixin, UpdateModelMixin)
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.permissions import AllowAny, IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet, ModelViewSet
 
-from store import serializers
-from store.permissions import IsAdminOrReadOnly
+from store import permissions, serializers
+from store.permissions import (FullDjangoModelPermission, IsAdminOrReadOnly,
+                               ViewCustomerHistoryPermission)
 
 from .filters import ProductFilter
 from .models import (Cart, CartItem, Collection, Customer, OrderItem, Product,
@@ -93,7 +94,11 @@ class CartViewSet(CreateModelMixin, DestroyModelMixin, RetrieveModelMixin, Gener
 class CustomerViewSet(ModelViewSet):
     queryset = Customer.objects.select_related('user').all()
     serializer_class = CustomerSerializer
-    permission_classes = [IsAdminOrReadOnly]
+    permission_classes = [IsAdminUser]
+
+    @action(detail=True, permission_classes=[ViewCustomerHistoryPermission])
+    def history(self, request, pk):
+        return Response("OK")
 
     @action(detail=False, methods=['GET', 'PUT'], permission_classes=[IsAuthenticated])
     def me(self, request):
