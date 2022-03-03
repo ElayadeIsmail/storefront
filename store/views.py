@@ -21,8 +21,8 @@ from .models import (Cart, CartItem, Collection, Customer, Order, OrderItem,
 from .pagination import DefaultPagination
 from .serializers import (AddCartItemSerializer, CartItemSerializer,
                           CartSerializer, CollectionSerializer,
-                          CustomerSerializer, OrderSerializer,
-                          ProductSerializer, ReviewSerializer,
+                          CreateOrderSerializer, CustomerSerializer,
+                          OrderSerializer, ProductSerializer, ReviewSerializer,
                           UpdateCartItemSerializer)
 
 
@@ -116,5 +116,20 @@ class CustomerViewSet(ModelViewSet):
 
 
 class OrderViewSet(ModelViewSet):
-    queryset = Order.objects.all()
-    serializer_class = OrderSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        if user.is_staff:
+            return Order.objects.all()
+        (customer_id, created) = Customer.objects.only(
+            'id').get_or_create(user_id=user.id)
+        return Order.objects.filter(customer_id=customer_id).all()
+
+    def get_serializer(self, *args, **kwargs):
+        if self.request.method == 'POST':
+            return CreateOrderSerializer
+        return OrderSerializer
+
+    def get_serializer_context(self):
+        return {'user_id': self.request.user.id}
