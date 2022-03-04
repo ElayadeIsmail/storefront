@@ -100,7 +100,8 @@ class CustomerViewSet(ModelViewSet):
             serializer = serializers.CustomerSerializer(customer)
             return Response(serializer.data)
         elif request.method == 'PUT':
-            serializer = serializers.CustomerSerializer(customer, data=request.data)
+            serializer = serializers.CustomerSerializer(
+                customer, data=request.data)
             serializer.is_valid(raise_exception=True)
             serializer.save()
             return Response(serializer.data)
@@ -139,3 +140,13 @@ class OrderViewSet(ModelViewSet):
         customer_id = models.Customer.objects.only(
             'id').get(user_id=user.id)
         return models.Order.objects.filter(customer_id=customer_id).all()
+
+
+class ProductImageViewSet(ModelViewSet):
+    serializer_class = serializers.ProductImageSerializer
+
+    def get_queryset(self):
+        return models.ProductImage.objects.filter(product_id=self.kwargs['product_pk'])
+
+    def get_serializer_context(self):
+        return {'product_id': self.kwargs['product_pk']}

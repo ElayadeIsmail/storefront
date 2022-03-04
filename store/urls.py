@@ -14,6 +14,10 @@ product_router = routers.NestedDefaultRouter(
 
 product_router.register('reviews', views.ReviewViewSet,
                         basename='product-reviews')
+# you have to add basename after overwrite get_queryset method
+product_router.register(
+    'images', views.ProductImageViewSet, basename='product-images')
+
 
 cart_router = routers.NestedDefaultRouter(router, 'carts', lookup='cart')
 
