@@ -1,34 +1,25 @@
 
-
-from multiprocessing import context
-
 from django.db.models import Count
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.filters import OrderingFilter, SearchFilter
 from rest_framework.mixins import (CreateModelMixin, DestroyModelMixin,
-                                   RetrieveModelMixin, UpdateModelMixin)
+                                   RetrieveModelMixin)
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet, ModelViewSet
 
 from store.permissions import IsAdminOrReadOnly, ViewCustomerHistoryPermission
 
+from . import models, serializers
 from .filters import ProductFilter
-from .models import (Cart, CartItem, Collection, Customer, Order, OrderItem,
-                     Product, Review)
 from .pagination import DefaultPagination
-from .serializers import (AddCartItemSerializer, CartItemSerializer,
-                          CartSerializer, CollectionSerializer,
-                          CreateOrderSerializer, CustomerSerializer,
-                          OrderSerializer, ProductSerializer, ReviewSerializer,
-                          UpdateCartItemSerializer, UpdateOrderSerializer)
 
 
 class ProductViewSet(ModelViewSet):
-    queryset = Product.objects.all()
-    serializer_class = ProductSerializer
+    queryset = models.Product.objects.all()
+    serializer_class = serializers.ProductSerializer
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_class = ProductFilter
     pagination_class = DefaultPagination
@@ -40,28 +31,28 @@ class ProductViewSet(ModelViewSet):
         return {"request": self.request}
 
     def destroy(self, request, *args, **kwargs):
-        if OrderItem.objects.filter(product_id=kwargs['pk']).count() > 0:
+        if models.OrderItem.objects.filter(product_id=kwargs['pk']).count() > 0:
             return Response({"error": "product can not be deleted because it is associated with an order item"}, status=status.HTTP_400_BAD_REQUEST)
         return super().destroy(request, *args, **kwargs)
 
 
 class CollectionViewSet(ModelViewSet):
-    queryset = Collection.objects.annotate(
+    queryset = models.Collection.objects.annotate(
         products_count=Count('products')).all()
-    serializer_class = CollectionSerializer
+    serializer_class = serializers.CollectionSerializer
     permission_classes = [IsAdminOrReadOnly]
 
     def destroy(self, request, *args, **kwargs):
-        if Product.objects.filter(collection_id=kwargs['pk']).count() > 0:
+        if models.Product.objects.filter(collection_id=kwargs['pk']).count() > 0:
             return Response({"error": "This collection still has products remove them first"})
         return super().destroy(request, *args, **kwargs)
 
 
 class ReviewViewSet(ModelViewSet):
-    serializer_class = ReviewSerializer
+    serializer_class = serializers.ReviewSerializer
 
     def get_queryset(self):
-        return Review.objects.filter(product_id=self.kwargs['product_pk'])
+        return models.Review.objects.filter(product_id=self.kwargs['product_pk'])
 
     def get_serializer_context(self):
         return {"product_id": self.kwargs['product_pk']}
@@ -73,13 +64,13 @@ class CartItemViewSet(ModelViewSet):
 
     def get_serializer_class(self):
         if self.request.method == 'POST':
-            return AddCartItemSerializer
+            return serializers.AddCartItemSerializer
         elif self.request.method == "PATCH":
-            return UpdateCartItemSerializer
-        return CartItemSerializer
+            return serializers.UpdateCartItemSerializer
+        return serializers.CartItemSerializer
 
     def get_queryset(self):
-        return CartItem.objects. \
+        return models.CartItem.objects. \
             filter(cart_id=self.kwargs['cart_pk']) \
             .select_related('product')
 
@@ -88,13 +79,13 @@ class CartItemViewSet(ModelViewSet):
 
 
 class CartViewSet(CreateModelMixin, DestroyModelMixin, RetrieveModelMixin, GenericViewSet):
-    queryset = Cart.objects.prefetch_related('items__product').all()
-    serializer_class = CartSerializer
+    queryset = models.Cart.objects.prefetch_related('items__product').all()
+    serializer_class = serializers.CartSerializer
 
 
 class CustomerViewSet(ModelViewSet):
-    queryset = Customer.objects.select_related('user').all()
-    serializer_class = CustomerSerializer
+    queryset = models.Customer.objects.select_related('user').all()
+    serializer_class = serializers.CustomerSerializer
     permission_classes = [IsAdminUser]
 
     @action(detail=True, permission_classes=[ViewCustomerHistoryPermission])
@@ -103,13 +94,13 @@ class CustomerViewSet(ModelViewSet):
 
     @action(detail=False, methods=['GET', 'PUT'], permission_classes=[IsAuthenticated])
     def me(self, request):
-        customer = Customer.objects.get(
+        customer = models.Customer.objects.get(
             user_id=request.user.id)
         if request.method == 'GET':
-            serializer = CustomerSerializer(customer)
+            serializer = serializers.CustomerSerializer(customer)
             return Response(serializer.data)
         elif request.method == 'PUT':
-            serializer = CustomerSerializer(customer, data=request.data)
+            serializer = serializers.CustomerSerializer(customer, data=request.data)
             serializer.is_valid(raise_exception=True)
             serializer.save()
             return Response(serializer.data)
@@ -125,26 +116,26 @@ class OrderViewSet(ModelViewSet):
         return [IsAuthenticated()]
 
     def create(self, request, *args, **kwargs):
-        serializer = CreateOrderSerializer(
+        serializer = serializers.CreateOrderSerializer(
             data=request.data,
             context={'user_id': self.request.user.id}
         )
         serializer.is_valid(raise_exception=True)
         order = serializer.save()
-        serializer = OrderSerializer(order)
+        serializer = serializers.OrderSerializer(order)
         return Response(serializer.data)
 
     def get_serializer(self, *args, **kwargs):
         if self.request.method == 'POST':
-            return CreateOrderSerializer
+            return serializers.CreateOrderSerializer
         elif self.request.method == 'PATCH':
-            return UpdateOrderSerializer
-        return OrderSerializer
+            return serializers.UpdateOrderSerializer
+        return serializers.OrderSerializer
 
     def get_queryset(self):
         user = self.request.user
         if user.is_staff:
-            return Order.objects.all()
-        customer_id = Customer.objects.only(
+            return models.Order.objects.all()
+        customer_id = models.Customer.objects.only(
             'id').get(user_id=user.id)
-        return Order.objects.filter(customer_id=customer_id).all()
+        return models.Order.objects.filter(customer_id=customer_id).all()
