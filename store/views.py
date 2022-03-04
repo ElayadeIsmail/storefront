@@ -13,9 +13,7 @@ from rest_framework.permissions import AllowAny, IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet, ModelViewSet
 
-from store import permissions, serializers
-from store.permissions import (FullDjangoModelPermission, IsAdminOrReadOnly,
-                               ViewCustomerHistoryPermission)
+from store.permissions import IsAdminOrReadOnly, ViewCustomerHistoryPermission
 
 from .filters import ProductFilter
 from .models import (Cart, CartItem, Collection, Customer, Order, OrderItem,
@@ -25,7 +23,7 @@ from .serializers import (AddCartItemSerializer, CartItemSerializer,
                           CartSerializer, CollectionSerializer,
                           CreateOrderSerializer, CustomerSerializer,
                           OrderSerializer, ProductSerializer, ReviewSerializer,
-                          UpdateCartItemSerializer)
+                          UpdateCartItemSerializer, UpdateOrderSerializer)
 
 
 class ProductViewSet(ModelViewSet):
@@ -118,7 +116,13 @@ class CustomerViewSet(ModelViewSet):
 
 
 class OrderViewSet(ModelViewSet):
-    permission_classes = [IsAuthenticated]
+
+    http_method_names = ['get', 'post', 'patch', 'delete', 'head', 'options']
+
+    def get_permissions(self):
+        if self.request.method in ['PATCH', 'DELETE']:
+            return [IsAdminUser()]
+        return [IsAuthenticated()]
 
     def create(self, request, *args, **kwargs):
         serializer = CreateOrderSerializer(
@@ -141,4 +145,6 @@ class OrderViewSet(ModelViewSet):
     def get_serializer(self, *args, **kwargs):
         if self.request.method == 'POST':
             return CreateOrderSerializer
+        elif self.request.method == 'PATCH':
+            return UpdateOrderSerializer
         return OrderSerializer
