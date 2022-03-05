@@ -15,6 +15,7 @@ from store.permissions import IsAdminOrReadOnly, ViewCustomerHistoryPermission
 from . import models, serializers
 from .filters import ProductFilter
 from .pagination import DefaultPagination
+from .tasks import notify_customers
 
 
 class ProductViewSet(ModelViewSet):
@@ -28,6 +29,7 @@ class ProductViewSet(ModelViewSet):
     ordering_fields = ['unit_price', 'last_update']
 
     def get_serializer_context(self):
+        notify_customers.delay("Hello")
         return {"request": self.request}
 
     def destroy(self, request, *args, **kwargs):

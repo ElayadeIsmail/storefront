@@ -14,6 +14,8 @@ from pathlib import Path
 
 from environs import Env
 
+from celery.schedules import crontab
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -172,5 +174,19 @@ SIMPLE_JWT = {
     'AUTH_HEADER_TYPES': ('Bearer',),
 }
 
-
+# url for redis broker
 CELERY_BROKER_URL = 'redis://localhost:6379/1'
+
+# scheduling Periodic tasks
+CELERY_BEAT_SCHEDULE = {
+    'notify_customer': {
+        'task': 'store.tasks.notify_customers',
+        'schedule': crontab(day_of_week=1, hour=7, minute=30),
+        # arguments for the function
+        # 'args':['hello world'],
+        # keyword arguments
+        # 'kwargs':{
+        #     'key':'value'
+        # }
+    }
+}
