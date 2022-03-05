@@ -67,7 +67,7 @@ MIDDLEWARE = [
 ]
 
 CORS_ALLOWED_ORIGINS = [
-    '127.0.0.1',
+    'http://127.0.0.1',
 ]
 
 ROOT_URLCONF = 'storefront.urls'
@@ -171,3 +171,6 @@ DJOSER = {
 SIMPLE_JWT = {
     'AUTH_HEADER_TYPES': ('Bearer',),
 }
+
+
+CELERY_BROKER_URL = 'redis://localhost:6379/1'

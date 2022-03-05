@@ -50,7 +50,7 @@ class ProductImage(models.Model):
     product = models.ForeignKey(
         Product, on_delete=models.CASCADE, related_name="images")
     image = models.ImageField(
-        upload_to='store/images', validators=[validators])
+        upload_to='store/images', validators=[validators.validate_file_size])
 
 
 class Customer(models.Model):
