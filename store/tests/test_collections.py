@@ -1,6 +1,7 @@
-
 import pytest
+from model_bakery import baker
 from rest_framework import status
+from store.models import Collection
 
 
 @pytest.fixture
@@ -19,10 +20,13 @@ class TestCreateCollection:
 
     def test_if_user_is_not_admin_return_403(self, create_collection, authenticate):
         # AAA (Arrange,Act,Assert)
-
+        # Arrange
         authenticate()
+
+        # Act
         response = create_collection({'title': 'a'})
 
+        # Assert
         assert response.status_code == status.HTTP_403_FORBIDDEN
 
     def test_if_data_is_invalid_return_400(self, create_collection, authenticate):
@@ -40,3 +44,17 @@ class TestCreateCollection:
 
         assert response.status_code == status.HTTP_201_CREATED
         assert response.data['id'] > 0
+
+
+@pytest.mark.django_db
+class TestRetriveCollection:
+    def test_if_id_collection_exist_returns_200(self, api_client):
+        # Arrange
+        collection = baker.make(Collection)
+
+        response = api_client.get(f'/store/collections/{collection.id}/')
+
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data == {'id': collection.id,
+                                 'title': collection.title,
+                                 'products_count': 0}
