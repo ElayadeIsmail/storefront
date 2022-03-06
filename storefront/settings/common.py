@@ -85,18 +85,6 @@ TEMPLATES = [
 WSGI_APPLICATION = 'storefront.wsgi.application'
 
 
-# CACHE
-CACHES = {
-    "default": {
-        "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": "redis://127.0.0.1:6379/2",
-        "OPTIONS": {
-            "CLIENT_CLASS": "django_redis.client.DefaultClient",
-        }
-    }
-}
-
-
 # Password validation
 # https://docs.djangoproject.com/en/4.0/ref/settings/#auth-password-validators
 
@@ -165,7 +153,6 @@ SIMPLE_JWT = {
 }
 
 # url for redis broker
-CELERY_BROKER_URL = 'redis://localhost:6379/1'
 
 # scheduling Periodic tasks
 CELERY_BEAT_SCHEDULE = {
